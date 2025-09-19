@@ -1,0 +1,17 @@
+{
+  "name": "jha-app",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start-server": "node server/email-server.js"
+  },
+  "dependencies": {
+    "html2pdf.js": "^0.10.1",
+    "xlsx": "^0.18.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
