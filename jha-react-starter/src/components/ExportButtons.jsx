@@ -1,45 +1,49 @@
-import React from 'react'
-import html2pdf from 'html2pdf.js'
-import * as XLSX from 'xlsx'
+import React from "react";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
-export default function ExportButtons({ steps }) {
-  function exportToExcel() {
-    if (!steps.length) return alert('No steps to export')
-    const rows = steps.map(s => ({
-      Step: s.step,
-      Hazards: s.hazards.join(', '),
-      'Risk (Before Controls)': s.riskBefore,
-      Controls: s.controls || '',
-      'Risk (After Controls)': s.riskAfter || '',
-      PPE: (s.suggestedPPE||[]).concat(s.customPPE||[]).join(', ')
-    }))
+function ExportButton({ jobTask, projectLocation, teamMembers, approvedBy, date, steps }) {
+  const handleExport = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("JSEA");
 
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'JHA')
-    XLSX.writeFile(wb, 'JHA.xlsx')
-  }
+    // Header rows
+    worksheet.addRow(["Job / Task:", jobTask || "", "Project/Location:", projectLocation || ""]);
+    worksheet.addRow(["JSA Team Members:", teamMembers || "", "Date:", date || ""]);
+    worksheet.addRow(["JSA Approved by:", approvedBy || ""]);
+    worksheet.addRow([]); // Empty row for spacing
 
-  function exportToPDF() {
-    if (!steps.length) return alert('No steps to export')
-    const element = document.getElementById('jha-preview')
-    if (!element) return alert('Preview not found')
+    // Steps table header
+    worksheet.addRow(["Step", "Hazard", "Risk", "Control Measures"]);
 
-    const opt = {
-      margin: 0.5,
-      filename: 'JHA.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    // Steps data (if provided)
+    if (steps && steps.length > 0) {
+      steps.forEach((step, index) => {
+        worksheet.addRow([
+          step.step || `Step ${index + 1}`,
+          step.hazard || "",
+          step.risk || "",
+          step.control || "",
+        ]);
+      });
     }
 
-    html2pdf().from(element).set(opt).save()
-  }
+    // Style headers
+    worksheet.getRow(5).font = { bold: true };
+
+    // Generate Excel buffer and trigger download
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), "JSEA.xlsx");
+  };
 
   return (
-    <div className="exports">
-      <button className="btn" onClick={exportToExcel}>Export to Excel</button>
-      <button className="btn" onClick={exportToPDF}>Export to PDF</button>
-    </div>
-  )
+    <button
+      onClick={handleExport}
+      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+    >
+      Export JSEA to Excel
+    </button>
+  );
 }
+
+export default ExportButton;
